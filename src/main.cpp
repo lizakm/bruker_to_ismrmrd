@@ -64,11 +64,24 @@ int main(int argc, char** argv)
     unsigned slashloc = in_filename.find_last_of("/");
     std::string subjectfilename = in_filename.substr(0,slashloc+1) + std::string("subject");
 
+       
     // Parse Bruker parameters
     BrukerParameterFile acqpar(acqpfilename);
     BrukerParameterFile methodpar(methodfilename);
     BrukerParameterFile subjectpar(subjectfilename);
-
+    if(acqpar.ParFileExists == false) {
+        std::cout << "No acquisition parameters" << std::endl;
+        exit(-1);
+    }
+    if(methodpar.ParFileExists == false) {
+        std::cout << "No method parameters" << std::endl;
+        exit(-1);
+    }
+    if(subjectpar.ParFileExists == false) {
+        std::cout << "Warning! No subject file available. Setting anonymous" << std::endl;
+        subject_info = false;
+    }
+    
     // Get the profile list and the first profile
     BrukerProfileListGenerator lg;
     BrukerRawDataProfile* first = lg.GetProfileList(&acqpar,&methodpar);
@@ -90,7 +103,7 @@ int main(int argc, char** argv)
     // have to add some methods to the BrukerProfileListGenerator
     BrukerParameter* p;
     p = acqpar.FindParameter("SW");
-    int freq = floor(p->GetValue(0)->GetFloatValue() * 1000000);
+    int freq = floor(p->GetValue(0)->GetFloatValue() * 1000000.);
 
     // Encoding info
     //p = methodpar.FindParameter("PVM_SpatDimEnum");
@@ -110,26 +123,37 @@ int main(int argc, char** argv)
     int fovz = p->GetValue(0)->GetIntValue();
 
     // Subject Info
-    p = subjectpar.FindParameter("SUBJECT_name_string");
-    std::string subject_name = p->GetValue(0)->GetStringValue();
-    p = subjectpar.FindParameter("SUBJECT_study_name");
-    std::string study_description = p->GetValue(0)->GetStringValue();
-    p = subjectpar.FindParameter("SUBJECT_study_instance_uid");
-    std::string study_instanceUID = p->GetValue(0)->GetStringValue();
-    p = subjectpar.FindParameter("SUBJECT_entry");
-    std::string patient_entry = p->GetValue(0)->GetStringValue();
-    p = subjectpar.FindParameter("SUBJECT_position");
-    std::string patient_position = p->GetValue(0)->GetStringValue();
-    p = subjectpar.FindParameter("SUBJECT_date");
-    std::string study_date = p->GetValue(0)->GetStringValue();
-
+    //std::cout << " Setting subject info:" << subject_info << std::endl;
+    //std::string subject_name =  "Unknown";
+    //std::string study_description = "Unknown";
+    //std::string study_instanceUID = "Unknown";
+    //std::string patient_entry = "Unknown";
+    //std::string patient_position = "Unknown";
+    //std::string study_date = "Unkown";
+    if(subject_info == true) {
+        //std::cout << "Going after subject info" << std::endl;
+        p = subjectpar.FindParameter("SUBJECT_name_string");
+        std::string subject_name = p->GetValue(0)->GetStringValue();
+        p = subjectpar.FindParameter("SUBJECT_study_name");
+        std::string study_description = p->GetValue(0)->GetStringValue();
+        p = subjectpar.FindParameter("SUBJECT_study_instance_uid");
+        std::string study_instanceUID = p->GetValue(0)->GetStringValue();
+        p = subjectpar.FindParameter("SUBJECT_entry");
+        std::string patient_entry = p->GetValue(0)->GetStringValue();
+        p = subjectpar.FindParameter("SUBJECT_position");
+        std::string patient_position = p->GetValue(0)->GetStringValue();
+        p = subjectpar.FindParameter("SUBJECT_date");
+        std::string study_date = p->GetValue(0)->GetStringValue();
+    }
+        
+    
     // Geometry
+    //std::cout << "Setting geometry" << std::endl;
     float read_offset_mm[nz];
     p = acqpar.FindParameter("ACQ_read_offset");
     for ( int i=0; i< nz; i++ ) {
         read_offset_mm[i] = p->GetValue(i)->GetFloatValue();
-    }
-    
+    } 
     float phase1_offset_mm[nz];
     p = acqpar.FindParameter("ACQ_phase1_offset");
     for ( int i=0; i<nz; i++ ) {
@@ -161,18 +185,16 @@ int main(int argc, char** argv)
             }
          }
      }
-
-    std::cout << "YO MAMA!" << std::endl;
     
 
     // Write some info out to the user
     //lg.PrintParameters();            
     //std::cout << "Spatial Dimensions: " << image_type << std::endl;
-    std::cout << "Subject name: " << subject_name << std::endl;
-    std::cout << "Study description: " << study_description << std::endl;
-    std::cout << "Study instance: " << study_instanceUID << std::endl;
-    std::cout << "Patient entry: " << patient_entry << std::endl;
-    std::cout << "Patient Position: " << patient_position << std::endl;    
+    //std::cout << "Subject name: " << subject_name << std::endl;
+    //std::cout << "Study description: " << study_description << std::endl;
+    //std::cout << "Study instance: " << study_instanceUID << std::endl;
+    //std::cout << "Patient entry: " << patient_entry << std::endl;
+    //std::cout << "Patient Position: " << patient_position << std::endl;    
     //std::cout << "Frequency: " << freq << std::endl;
     //std::cout << "Number of channels: " << nc << std::endl;
     //std::cout << "Nx: " << nx << std::endl;

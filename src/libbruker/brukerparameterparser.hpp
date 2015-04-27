@@ -166,7 +166,11 @@ public:
 
   BrukerParameter* FindParameter(std::string name);
 
+  bool ParFileExists;
+  
+  
 protected:
+  bool FileExists(std::string filename);
   int ParseFile();
 
   yyFlexLexer* m_pLexer;

@@ -12,8 +12,16 @@
 
 #include "brukerparameterparser.hpp"
 
+
 #include <sstream>
 #include <iomanip>
+#include <cstring>
+#include <string>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 
 BrukerParameterFile::BrukerParameterFile(std::string filename)
   : m_pLexer(0),
@@ -23,7 +31,9 @@ BrukerParameterFile::BrukerParameterFile(std::string filename)
     m_pCurrentParameter(0)
 {
   m_FileName = filename;
-
+  
+  ParFileExists = FileExists(m_FileName);
+   
   m_pInputFileBuffer = new std::filebuf();
 
   if (m_pInputFileBuffer == 0) {
@@ -32,6 +42,10 @@ BrukerParameterFile::BrukerParameterFile(std::string filename)
   }
   
   m_pInputFileBuffer->open(m_FileName.c_str(), std::ios::in);
+  if(m_pInputFileBuffer == 0) {
+    std::cerr << "BrukerParameterFile: failed to open parameter file:" << m_FileName << std::endl;
+    exit(-1);
+  }
 
   m_pInputStream = new std::istream(m_pInputFileBuffer);
   if (m_pInputStream == 0) {
@@ -44,8 +58,9 @@ BrukerParameterFile::BrukerParameterFile(std::string filename)
     std::cerr << "BrukerParameterFile: failed to allocate lexer" << std::endl;
     exit(-1);
   }
-
-  ParseFile();
+  if(ParFileExists) {
+      ParseFile();
+  }
 }
 
 
@@ -60,6 +75,20 @@ BrukerParameterFile::~BrukerParameterFile()
     delete m_pInputFileBuffer;
   }
   
+}
+
+
+bool BrukerParameterFile::FileExists(std::string filename)
+{
+  struct stat mybuf;
+  int res;
+  res = stat(filename.c_str(), &mybuf);
+  if ( res  == 0) {
+    return true;
+  }
+  else {
+    return false;
+  }
 }
 
 int BrukerParameterFile::ParseFile()
